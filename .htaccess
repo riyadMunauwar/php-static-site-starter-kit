@@ -1,0 +1,80 @@
+# Enable rewrite engine
+RewriteEngine On
+
+# Set base directory path (if your app is in a subdirectory)
+# RewriteBase /your-subdirectory/
+
+# Protect against directory traversal
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Deny access to sensitive directories and files
+RedirectMatch 403 ^/?\..*$
+RedirectMatch 403 /?composer\.(lock|json)$
+RedirectMatch 403 /?vendor/.*$
+
+# Security Headers
+<IfModule mod_headers.c>
+    # Protect against clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+    # Enable XSS protection
+    Header set X-XSS-Protection "1; mode=block"
+    # Disable MIME-type sniffing
+    Header set X-Content-Type-Options "nosniff"
+    # Enable strict transport security (if using HTTPS)
+    # Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Performance Settings
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# Enable compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Main rewrite rules for the router
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L,QSA]
+
+# Force HTTPS (uncomment if using SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Block access to PHP files directly except index.php
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
+RewriteCond %{REQUEST_FILENAME} !^index\.php
+RewriteRule ^ - [F]
+
+# Prevent direct access to the pages directory
+RewriteRule ^pages/ - [F,L]
+
+# PHP settings
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+    php_value max_input_time 60
+</IfModule>
